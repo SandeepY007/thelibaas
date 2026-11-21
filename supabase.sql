@@ -2,7 +2,7 @@
 create table if not exists public.products (
   id bigint primary key,
   name text not null,
-  category text not null check (category in ('Beauty', 'Fashion', 'Jewellery')),
+  category text not null,
   price numeric(10, 2) not null check (price >= 0),
   "oldPrice" numeric(10, 2),
   tag text,
@@ -11,6 +11,20 @@ create table if not exists public.products (
   image text not null,
   description text not null default ''
 );
+
+-- Allow products to use categories added in the shop editor.
+alter table public.products drop constraint if exists products_category_check;
+
+create table if not exists public.categories (
+  name text primary key check (char_length(trim(name)) between 1 and 60)
+);
+
+insert into public.categories (name) values ('Beauty'), ('Fashion'), ('Jewellery')
+on conflict (name) do nothing;
+
+insert into public.categories (name)
+select distinct category from public.products where trim(category) <> ''
+on conflict (name) do nothing;
 
 insert into public.products (id, name, category, price, "oldPrice", tag, rating, reviews, image, description) values
 (1, 'The Everyday Glow Serum', 'Beauty', 34, 42, 'BESTSELLER', 4.9, 128, 'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=800&q=85', 'A lightweight, vitamin-rich serum for a fresh, dewy glow. Made for everyday skin, with hyaluronic acid and niacinamide.'),

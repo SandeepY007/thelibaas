@@ -24,6 +24,11 @@ export default async function handler(req, res) {
       const rows = await supabase('?select=*&order=id.asc');
       return res.status(200).json(rows);
     }
+    if (req.method === 'POST' || req.method === 'DELETE') {
+      const expected = process.env.ADMIN_TOKEN;
+      if (!expected) return res.status(503).json({ error: 'Set ADMIN_TOKEN in Vercel project settings.' });
+      if (req.headers['x-admin-token'] !== expected) return res.status(401).json({ error: 'Sign in to manage products.' });
+    }
     if (req.method === 'POST') {
       const product = req.body;
       if (!product?.name || !product?.category || !Number.isFinite(Number(product.price))) return res.status(400).json({ error: 'Add a name, category, and price.' });
